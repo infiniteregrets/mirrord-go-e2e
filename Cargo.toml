@@ -1,0 +1,20 @@
+[package]
+name = "golang-e2e"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ctor = "0.1.22"
+lazy_static = "1.4.0"
+libc = "0.2.121"
+nix = "0.23.1"
+tracing = "0.1"
+env_logger = "0.9"
+tracing-subscriber = "0.3"
+frida-gum = {version = "0.6.5", features = ["auto-download"]}
+
+[lib]
+name = "mirrord"
+crate_type = ["dylib"]
