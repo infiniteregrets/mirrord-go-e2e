@@ -30,20 +30,19 @@ macro_rules! hook_sym {
     };
 }
 
-/// RawSyscall
-#[cfg(target_os = "linux")]
-#[cfg(target_arch = "x86_64")]
-#[naked]
-unsafe extern "C" fn go_raw_syscall_detour() {
-    asm!("nop", options(noreturn),);
-}
-
-/// SysCall
 #[allow(dead_code)]
 #[cfg(target_os = "linux")]
 #[cfg(target_arch = "x86_64")]
 #[naked]
 unsafe extern "C" fn go_syscall_detour() {
+    asm!("nop", options(noreturn),);
+}
+
+
+#[cfg(target_os = "linux")]
+#[cfg(target_arch = "x86_64")]
+#[naked]
+unsafe extern "C" fn go_raw_syscall_detour() {
     asm!(
         "mov rsi, QWORD PTR [rsp+0x10]",
         "mov rdx, QWORD PTR [rsp+0x18]",
@@ -79,18 +78,18 @@ unsafe extern "C" fn go_very_raw_syscall_detour() {
 }
 
 #[no_mangle]
-unsafe extern "C" fn c_abi_syscall_handler(syscall: i64, param1: i64, param2: i64, param3: i64) {
+unsafe extern "C" fn c_abi_syscall_handler(syscall: i64, param1: i64, param2: i64, param3: i64) -> i32 {
     debug!("C ABI handler received `Syscall - {:?}` with args >> arg1 -> {:?}, arg2 -> {:?}, arg3 -> {:?}", syscall, param1, param2, param3);
-    let res: i32 = match syscall {
+    let res = match syscall {
         libc::SYS_socket => {
             let sock = libc::socket(param1 as i32, param2 as i32, param3 as i32);
             debug!("C ABI handler returned socket descriptor -> {:?}", sock);
-            SOCKETS.lock().unwrap().push(sock);
-            sock
+            //SOCKETS.lock().unwrap().push(sock);
+            sock          
         }
-        _ => panic!("Unhandled Syscall - {:?}", syscall),
+        _ => libc::syscall(syscall, param1, param2, param3) as i32,
     };
-    asm!("mov rax, {0}", in(reg) res);
+    return res 
 }
 
 #[ctor]
