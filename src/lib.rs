@@ -155,9 +155,9 @@ unsafe extern "C" fn go_asmcgocall() {
     );
 }
 
-fn socket(domain: i32, type_: i32, protocol: i32) -> i32 {
-    //println!("socket({}, {}, {})", domain, type_, protocol);
+fn socket(domain: i32, type_: i32, protocol: i32) -> i32 {    
     let sockfd = unsafe { libc::socket(domain, type_, protocol) };
+    debug!("socket detour returned socket fd: {}", sockfd);
     sockfd
 }
 
@@ -168,12 +168,10 @@ unsafe extern "C" fn c_abi_syscall_handler(
     param2: i64,
     param3: i64,
 ) -> i32 {
-    // debug!("C ABI handler received `Syscall - {:?}` with args >> arg1 -> {:?}, arg2 -> {:?}, arg3 -> {:?}", syscall, param1, param2, param3);
+    debug!("C ABI handler received `Syscall - {:?}` with args >> arg1 -> {:?}, arg2 -> {:?}, arg3 -> {:?}", syscall, param1, param2, param3);
     let res = match syscall {
         libc::SYS_socket => {
-            let sock = socket(param1 as i32, param2 as i32, param3 as i32);
-            // SOCKETS.lock().unwrap().push(sock);
-            // libc::puts("hello from detour\n".as_ptr() as _);            
+            let sock = socket(param1 as i32, param2 as i32, param3 as i32);                              
             sock
         }
         _ => libc::syscall(syscall, param1, param2, param3) as i32,
