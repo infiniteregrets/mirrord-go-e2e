@@ -75,29 +75,30 @@ unsafe extern "C" fn go_raw_syscall_detour() {
     );
 }
 
+
 #[cfg(target_os = "linux")]
 #[cfg(target_arch = "x86_64")]
 #[naked]
 unsafe extern "C" fn go_asmcgocall() {
     asm!(
-        "mov rbx, QWORD PTR [rsp+0x10]",
-        "mov r10, QWORD PTR [rsp+0x18]",
-        "mov r11, QWORD PTR [rsp+0x20]",
-        "mov rax, QWORD PTR [rsp+0x8]",
-        "mov    rdx, rsp",
-        "mov    rdi, QWORD PTR fs:0xfffffff8",
-        "cmp    rdi, 0x0",
-        "je     2f",
+        "mov rbx, QWORD PTR [rsp+0x10]",        
+        "mov r10, QWORD PTR [rsp+0x18]",        
+        "mov r11, QWORD PTR [rsp+0x20]",        
+        "mov rax, QWORD PTR [rsp+0x8]",        
+        "mov    rdx, rsp",        
+        "mov    rdi, QWORD PTR fs:[0xfffffff8]",        
+        "cmp    rdi, 0x0",        
+        "je     2f",        
         "mov    r8,QWORD PTR [rdi+0x30]",
-        "mov    rsi,QWORD PTR [r8+0x50]",
+        "mov    rsi,QWORD PTR [r8+0x50]",        
         "cmp    rdi,rsi",
-        "je     2f",
-        "mov    rsi,QWORD PTR [r8]",
-        "cmp    rdi,rsi",
-        "je     2f",
-        "mov    QWORD PTR fs:[0xffffff], rsi",
-        "mov    rsp,QWORD PTR [rsi+0x38]",
-        "sub    rsp,0x40",
+        "je     2f",        
+        "mov    rsi,QWORD PTR [r8]",    
+        "cmp    rdi,rsi",        
+        "je     2f",                
+        "mov    QWORD PTR fs:[0xfffffff8], rsi",        
+        "mov    rsp,QWORD PTR [rsi+0x38]",        
+        "sub    rsp,0x40",        
         "and    rsp,0xfffffffffffffff0",
         "mov    QWORD PTR [rsp+0x30],rdi",
         "mov    rdi,QWORD PTR [rdi+0x8]",
@@ -117,6 +118,7 @@ unsafe extern "C" fn go_asmcgocall() {
         "mov  QWORD PTR [rsp+0x30],rdx",
         "mov  QWORD PTR [rsp+0x38],0x0",
         "ret",
+
         "2:",
         "sub    rsp,0x40",
         "and    rsp,0xfffffffffffffff0",
@@ -125,7 +127,7 @@ unsafe extern "C" fn go_asmcgocall() {
         "mov    rsi, rbx",
         "mov    rdx, r10",
         "mov    rcx, r11",
-        "mov    rdi, rax",
+        "mov    rdi, rax",        
         "call   c_abi_syscall_handler",
         "mov    rsi,QWORD PTR [rsp+0x28]",
         "mov    rsp,rsi",
@@ -133,6 +135,7 @@ unsafe extern "C" fn go_asmcgocall() {
         "mov  QWORD PTR [rsp+0x30],rdx",
         "mov  QWORD PTR [rsp+0x38],0x0",
         "ret",
+
         "3:",
         "lea    r9,[rip+0xdd9]",
         "mov    QWORD PTR [r14+0x40],r9",
@@ -170,8 +173,7 @@ unsafe extern "C" fn c_abi_syscall_handler(
         libc::SYS_socket => {
             let sock = socket(param1 as i32, param2 as i32, param3 as i32);
             // SOCKETS.lock().unwrap().push(sock);
-            // libc::puts("hello from detour\n".as_ptr() as _);
-            println!("hi");
+            // libc::puts("hello from detour\n".as_ptr() as _);            
             sock
         }
         _ => libc::syscall(syscall, param1, param2, param3) as i32,
