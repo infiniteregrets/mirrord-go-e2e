@@ -6,7 +6,6 @@ use ctor::ctor;
 use frida_gum::{interceptor::Interceptor, Gum};
 
 use lazy_static::lazy_static;
-// use libc::c_void;
 use std::{arch::asm, sync::Mutex};
 use tracing::debug;
 
@@ -67,6 +66,13 @@ unsafe extern "C" fn go_raw_syscall() {
         "mov rdx, QWORD PTR [rsp+0x20]",
         "mov rax, QWORD PTR [rsp+0x8]",
         "syscall",
+        "cmp    rax,0xfffffffffffff001",
+        "jbe    2f",
+        "mov    QWORD PTR [rsp+0x28], -0x1",
+        "mov    QWORD PTR [rsp+0x30],0x0",
+        "neg    rax",
+        "mov    QWORD PTR [rsp+0x38],rax",
+        "2:",
         "mov  QWORD PTR [rsp+0x28],rax",
         "mov  QWORD PTR [rsp+0x30],rdx",
         "mov  QWORD PTR [rsp+0x38],0x0",
@@ -197,6 +203,8 @@ fn socket(sockfd: i32, _domain: i32, _type_: i32, _protocol: i32) -> i32 {
 
 /// Syscall handler: socket calls go to the socket detour, while rest are passed to libc::syscall.
 #[no_mangle]
+#[cfg(target_os = "linux")]
+#[cfg(target_arch = "x86_64")]
 unsafe extern "C" fn c_abi_syscall_handler(
     syscall: i64,
     param1: i64,
