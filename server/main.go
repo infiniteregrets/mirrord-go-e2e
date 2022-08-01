@@ -62,6 +62,6 @@ func main() {
 		c.String(http.StatusOK, "OK")
 	})
 
-	fmt.Println("Server listening on port 80")
-	r.Run(":80")
+	fmt.Println("Server listening on port 8080")
+	r.Run(":8080")
 }
